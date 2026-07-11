@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #0a0912;
+  --surface: #14131d;
+  --surface-2: #1c1b28;
+  --line: rgba(245, 243, 238, 0.1);
+  --paper: #f5f3ee;
+  --paper-dim: rgba(245, 243, 238, 0.62);
+  --paper-faint: rgba(245, 243, 238, 0.4);
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-paper: var(--paper);
+  --color-paper-dim: var(--paper-dim);
+  --color-paper-faint: var(--paper-faint);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* Hide scrollbar on horizontally-scrolling rails, keep it functional */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2%, -3%, 0) scale(1.06);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.mood-blob {
+  animation: drift 14s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mood-blob {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
