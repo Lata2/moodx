@@ -332,6 +332,7 @@ function MovieRail({
             type="button"
             onClick={() => onPlay(movie)}
             className="group relative w-[130px] flex-none overflow-hidden rounded-2xl text-left transition-all duration-300 hover:-translate-y-2 sm:w-auto"
+           
             style={{
               background: 'rgba(255,255,255,0.04)',
               boxShadow: `
@@ -367,7 +368,7 @@ function MovieRail({
               }}
             />
 
-            <div className="relative h-[180px] w-full sm:h-[220px] lg:h-[260px]">
+        <div className="relative w-full aspect-[2/3]">
               <Image
                 src={movie.poster || movie.thumbnail}
                 alt={movie.title}
