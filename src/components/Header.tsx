@@ -8,11 +8,11 @@ const HOT_PINK_GLOW = 'rgba(233, 156, 14, 0.55)';
 export default function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-line/60 bg-ink/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-10">
+      <div className="mx-auto flex max-w-7xl items-center justify-between p-4 sm:px-10">
         {/* logo */}
         <a href="#" className="flex items-center gap-0">
           <Image
-            src="/assets/logo1.png"
+            src="/assets/app-icons/android-icon-foreground.png"
             alt="moodX logo"
             width={64}
             height={64}

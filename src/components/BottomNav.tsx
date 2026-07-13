@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, type CSSProperties, type SVGProps } from 'react';
-import SearchOverlay from './SearchOverlay';
+import { type CSSProperties, type SVGProps } from 'react';
 import { useWatchlist } from '@/lib/watchlist';
 
 const GOLD = '#e99c0e';
@@ -77,100 +76,83 @@ function ListIcon(props: IconProps) {
 
 const NAV_ITEMS = [
   { key: 'home', label: 'Home', href: '/', Icon: HomeIcon },
-  { key: 'search', label: 'Search', href: null, Icon: SearchIcon },
+  { key: 'search', label: 'Search', href: '/search', Icon: SearchIcon },
   { key: 'movies', label: 'Movies', href: '/movies', Icon: MoviesIcon },
   { key: 'list', label: 'My List', href: '/watchlist', Icon: ListIcon },
 ] as const;
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const [searchOpen, setSearchOpen] = useState(false);
   const { ids } = useWatchlist();
 
   return (
-    <>
-      <nav
-        className="fixed inset-x-0 bottom-0 z-40 md:hidden"
-        style={{
-          borderTop: '1px solid rgba(255,255,255,0.12)',
-          background: 'rgba(10, 9, 18, 0.96)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          boxShadow: '0 -12px 30px -16px rgba(0,0,0,0.5)',
-          padding: '0.35rem 0 0.75rem',
-          paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)',
-        }}
-      >
-        <div className="mx-auto flex max-w-md items-stretch justify-between px-1">
-          {NAV_ITEMS.map((item) => {
-            const active = item.href ? pathname === item.href : searchOpen;
-            const color = active ? GOLD_BRIGHT : IDLE;
+    <nav
+      className="fixed inset-x-0 bottom-0 z-40 md:hidden"
+      style={{
+        borderTop: '1px solid rgba(255,255,255,0.12)',
+        background: 'rgba(10, 9, 18, 0.96)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        boxShadow: '0 -12px 30px -16px rgba(0,0,0,0.5)',
+        padding: '0.35rem 0 0.75rem',
+        paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)',
+        transform: 'translateZ(0)',
+        WebkitTransform: 'translateZ(0)',
+        willChange: 'transform',
+      }}
+    >
+      <div className="mx-auto flex max-w-md items-stretch justify-between px-1">
+        {NAV_ITEMS.map((item) => {
+          const active = pathname === item.href;
+          const color = active ? GOLD_BRIGHT : IDLE;
 
-            const inner = (
-              <>
-                {active && (
-                  <span
-                    className="absolute inset-x-1 top-1 mx-auto h-10 w-10 rounded-full bg-white/10"
-                    style={{ boxShadow: `0 0 24px 2px ${GOLD_GLOW}` }}
-                  />
-                )}
-                {active && (
-                  <span
-                    className="absolute top-0 left-1/2 h-[2px] w-7 -translate-x-1/2 rounded-full"
-                    style={{
-                      background: `linear-gradient(90deg, ${GOLD}, ${GOLD_BRIGHT})`,
-                      boxShadow: `0 0 10px 1px ${GOLD_GLOW}`,
-                    }}
-                  />
-                )}
-                <span className="relative">
-                  <item.Icon className="h-5 w-5" style={{ color }} />
-                  {item.key === 'list' && ids.length > 0 && (
-                    <span
-                      className="absolute -right-1.5 -top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full font-mono text-[8px] font-medium text-black"
-                      style={{ background: GOLD_BRIGHT }}
-                    >
-                      {ids.length > 9 ? '9+' : ids.length}
-                    </span>
-                  )}
-                </span>
+          return (
+            <Link
+              key={item.key}
+              href={item.href}
+              className="relative flex flex-1 flex-col items-center justify-center gap-0.5 py-3 select-none"
+              style={{
+                transition: 'none',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              {active && (
                 <span
-                  className="mt-1 font-mono text-[10px] uppercase tracking-wider"
-                  style={{ color }}
-                >
-                  {item.label}
-                </span>
-              </>
-            );
-
-            if (!item.href) {
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => setSearchOpen(true)}
-                  aria-label="Search"
-                  className="relative flex flex-1 flex-col items-center justify-center gap-0.5 py-3"
-                >
-                  {inner}
-                </button>
-              );
-            }
-
-            return (
-              <Link
-                key={item.key}
-                href={item.href}
-                className="relative flex flex-1 flex-col items-center justify-center gap-0.5 py-3"
+                  className="absolute inset-x-1 top-1 mx-auto h-10 w-10 rounded-full bg-white/10"
+                  style={{ boxShadow: `0 0 24px 2px ${GOLD_GLOW}`, transition: 'none' }}
+                />
+              )}
+              {active && (
+                <span
+                  className="absolute top-0 left-1/2 h-[2px] w-7 -translate-x-1/2 rounded-full"
+                  style={{
+                    background: `linear-gradient(90deg, ${GOLD}, ${GOLD_BRIGHT})`,
+                    boxShadow: `0 0 10px 1px ${GOLD_GLOW}`,
+                    transition: 'none',
+                  }}
+                />
+              )}
+              <span className="relative" style={{ transition: 'none' }}>
+                <item.Icon className="h-5 w-5" style={{ color, transition: 'none' }} />
+                {item.key === 'list' && ids.length > 0 && (
+                  <span
+                    className="absolute -right-1.5 -top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full font-mono text-[8px] font-medium text-black"
+                    style={{ background: GOLD_BRIGHT, transition: 'none' }}
+                  >
+                    {ids.length > 9 ? '9+' : ids.length}
+                  </span>
+                )}
+              </span>
+              <span
+                className="mt-1 font-mono text-[10px] uppercase tracking-wider"
+                style={{ color, transition: 'none' }}
               >
-                {inner}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-
-      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
-    </>
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
   );
 }

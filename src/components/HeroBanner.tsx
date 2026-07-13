@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import type Hls from 'hls.js';
 import { movies, type Movie } from '@/lib/movie';
 
 const GOLD = '#e99c0e';
@@ -59,232 +59,6 @@ function StarIcon({
   );
 }
 
-function CloseIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path
-        d="M6 6l12 12M18 6L6 18"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  HLS video player — loads hls.js dynamically, falls back to        */
-/*  native HLS support (Safari) automatically. Explicitly calls       */
-/*  play() once the stream is ready so playback reliably starts.      */
-/* ------------------------------------------------------------------ */
-
-function HlsVideoPlayer({ src, poster }: { src: string; poster?: string }) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !src) return;
-
-    let hls: InstanceType<typeof Hls> | undefined;
-    let cancelled = false;
-
-    async function setup() {
-      if (!video) return;
-
-      if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = src;
-        video.load();
-        try {
-          await video.play();
-        } catch {
-          // Autoplay was blocked — user can press the native play button.
-        }
-        return;
-      }
-
-      const HlsModule = await import('hls.js');
-      const HlsCtor = HlsModule.default;
-
-      if (cancelled) return;
-
-      if (HlsCtor.isSupported()) {
-        hls = new HlsCtor({ enableWorker: true });
-        hls.loadSource(src);
-        hls.attachMedia(video);
-        hls.on(HlsCtor.Events.MANIFEST_PARSED, () => {
-          if (cancelled) return;
-          video.play().catch(() => {});
-        });
-      } else {
-        video.src = src;
-        video.play().catch(() => {});
-      }
-    }
-
-    setup();
-
-    return () => {
-      cancelled = true;
-      hls?.destroy();
-    };
-  }, [src]);
-
-  if (!src) {
-    return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-black text-white">
-        <p
-          className="font-mono text-sm uppercase tracking-wider"
-          style={{ color: 'rgba(255,255,255,0.7)' }}
-        >
-          Video coming soon
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <video
-      ref={videoRef}
-      poster={poster}
-      controls
-      autoPlay
-      playsInline
-      className="h-full w-full bg-black"
-    />
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Fullscreen modal player                                            */
-/* ------------------------------------------------------------------ */
-
-function VideoModal({ movie, onClose }: { movie: Movie; onClose: () => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
-    };
-  }, [onClose]);
-
-  return (
-   
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black p-0 sm:items-center sm:bg-black/95 sm:p-6"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-5xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full text-white"
-          style={{ backgroundColor: 'rgba(10,4,16,0.7)' }}
-        >
-          <CloseIcon className="h-4 w-4" />
-        </button>
-
-        {/* video frame: borders only on top/right/left, no bottom border; faded bottom shade */}
-        <div
-          className="relative overflow-hidden sm:rounded-2xl"
-          style={{
-            borderTop: `1px solid ${GOLD_BRIGHT}`,
-            borderLeft: `1px solid ${GOLD_BRIGHT}`,
-            borderRight: `1px solid ${GOLD_BRIGHT}`,
-            borderBottom: 'none',
-            boxShadow: `0 30px 80px -28px ${GOLD_GLOW}, 0 8px 30px -8px rgba(0,0,0,0.6)`,
-          }}
-        >
-  <div className="w-full h-[280px] md:h-[420px] lg:h-[640px] bg-black relative">
-    <HlsVideoPlayer src={movie.hlsUrl} poster={movie.banner} />
-    {/* subtle faded shade at bottom of video */}
-    <div
-      aria-hidden
-      className="pointer-events-none absolute left-0 right-0 bottom-0 h-24"
-      style={{
-        background:
-          'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(10,4,16,0.6) 100%)',
-      }}
-    />
-  </div>
-</div>
-
-{/* details panel */}
-<div
-  className="mt-5 rounded-2xl border p-4 sm:p-6"
-  style={{
-    borderColor: 'rgba(255,255,255,0.06)',
-    background:
-      'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))',
-    boxShadow: `0 20px 60px -30px ${GOLD_GLOW_SOFT}`,
-  }}
->
-  <div className="flex flex-col gap-4">
-    <div className="flex items-center gap-3">
-      <h2
-        className="font-display text-xl text-white"
-        style={{ textShadow: `0 0 18px ${GOLD_GLOW}, 0 0 4px ${GOLD_BRIGHT}` }}
-      >
-        {movie.title}
-      </h2>
-      {movie.releaseYear && (
-        <span
-          className="font-mono text-sm"
-          style={{
-            color: GOLD_BRIGHT,
-            textShadow: `0 0 12px ${GOLD_GLOW}`,
-          }}
-        >
-          ({movie.releaseYear})
-        </span>
-      )}
-    </div>
-
-    <div className="flex items-center gap-3">
-      {movie.tag && (
-        <span
-          className="rounded-full px-3 py-1 font-mono text-[12px] uppercase tracking-wide"
-          style={{
-            background: 'rgba(255,255,255,0.03)',
-            color: 'rgba(255,255,255,0.85)',
-          }}
-        >
-          {movie.tag}
-        </span>
-      )}
-      <span
-        className="font-mono text-[13px]"
-        style={{ color: 'rgba(255,255,255,0.65)' }}
-      >
-        {movies.length} titles · new drops weekly
-      </span>
-    </div>
-
-    {movie.description && (
-      <div
-        className="mt-1 rounded-xl p-4"
-        style={{
-          background: 'rgba(255,255,255,0.025)',
-          border: '1px solid rgba(255,255,255,0.06)',
-        }}
-      >
-        <p className="text-sm leading-relaxed text-white/80">
-          {movie.description}
-        </p>
-      </div>
-    )}
-  </div>
-</div>
-      </div>
-    </div>
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /*  Reusable movie rail                                                */
 /*  Cards: bright gradient top edge + brighter top-right corner glow, */
@@ -292,11 +66,13 @@ function VideoModal({ movie, onClose }: { movie: Movie; onClose: () => void }) {
 /* ------------------------------------------------------------------ */
 
 function MovieRail({
+  railId,
   title,
   accent,
   items,
   onPlay,
 }: {
+  railId: string;
   title: React.ReactNode;
   accent?: string;
   items: Movie[];
@@ -328,7 +104,7 @@ function MovieRail({
       >
         {items.map((movie, idx) => (
           <button
-            key={`${title}-${movie.id}-${idx}`}
+            key={`${railId}-${movie.id}-${idx}`}
             type="button"
             onClick={() => onPlay(movie)}
             className="group relative w-[130px] flex-none overflow-hidden rounded-2xl text-left transition-all duration-300 hover:-translate-y-2 sm:w-auto"
@@ -427,8 +203,8 @@ function MovieRail({
 /* ------------------------------------------------------------------ */
 
 export default function HeroBanner() {
+  const router = useRouter();
   const [slide, setSlide] = useState(0);
-  const [playing, setPlaying] = useState<Movie | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -438,6 +214,11 @@ export default function HeroBanner() {
   }, []);
 
   const heroMovie = movies[slide];
+
+  // navigate to a dedicated page instead of opening an in-page popup
+  const goToWatchPage = (movie: Movie) => {
+    router.push(`/watch/${movie.id}`);
+  };
 
   const forYouMovies = [...movies].reverse();
   const watchlistMovies = movies.map(
@@ -450,7 +231,7 @@ export default function HeroBanner() {
   return (
     <section
       className="relative border-b border-line/60"
-      style={{ backgroundColor: '#0a0410' }}
+      style={{ backgroundColor: '#0a0410', contain: 'layout paint style' }}
     >
       <style>{`
         @keyframes kenburns {
@@ -493,7 +274,7 @@ export default function HeroBanner() {
       `}</style>
 
       <div className="hero-frame relative">
-        <div className="relative h-[58vh] min-h-[340px] w-full overflow-hidden sm:h-[62vh] sm:min-h-[420px] lg:h-[65vh]">
+        <div className="relative h-[58dvh] min-h-[340px] w-full overflow-hidden sm:h-[62dvh] sm:min-h-[420px] lg:h-[65dvh]">
           <div className="absolute inset-0">
             {movies.map((movie, i) => (
               <div
@@ -593,7 +374,7 @@ export default function HeroBanner() {
                 <div className="mt-5 flex flex-wrap items-center gap-3 sm:mt-7 sm:gap-4">
                   <button
                     type="button"
-                    onClick={() => setPlaying(heroMovie)}
+                    onClick={() => goToWatchPage(heroMovie)}
                     className="flex items-center gap-2 rounded-full px-5 py-2.5 font-mono text-[12px] uppercase tracking-wider text-black transition-transform duration-300 hover:scale-[1.05] sm:px-6 sm:py-3 sm:text-[13px]"
                     style={{
                       background: `linear-gradient(135deg, ${GOLD_BRIGHT}, ${GOLD})`,
@@ -648,6 +429,7 @@ export default function HeroBanner() {
 
       <div className="relative mx-auto max-w-8xl px-4 py-10 sm:px-10 sm:py-14">
         <MovieRail
+          railId="trending"
           title={
             <>
               Trending <span style={{ color: GOLD_BRIGHT }}>now</span>
@@ -655,43 +437,42 @@ export default function HeroBanner() {
           }
           accent={`${movies.length} titles`}
           items={movies}
-          onPlay={setPlaying}
+          onPlay={goToWatchPage}
         />
 
         <MovieRail
+          railId="for-you"
           title={
             <>
               For <span style={{ color: GOLD_BRIGHT }}>you</span>
             </>
           }
           items={forYouMovies}
-          onPlay={setPlaying}
+          onPlay={goToWatchPage}
         />
 
         <MovieRail
+          railId="my-watchlist"
           title={
             <>
               My <span style={{ color: GOLD_BRIGHT }}>watchlist</span>
             </>
           }
           items={watchlistMovies}
-          onPlay={setPlaying}
+          onPlay={goToWatchPage}
         />
 
         <MovieRail
+          railId="category"
           title={
             <>
               Browse by <span style={{ color: GOLD_BRIGHT }}>category</span>
             </>
           }
           items={categoryMovies}
-          onPlay={setPlaying}
+          onPlay={goToWatchPage}
         />
       </div>
-
-      {playing && (
-        <VideoModal movie={playing} onClose={() => setPlaying(null)} />
-      )}
     </section>
   );
 }

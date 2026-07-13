@@ -37,7 +37,10 @@ export default function RootLayout({
       lang="en"
       className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-ink text-paper font-body pb-24 md:pb-0">
+      <body
+        className="min-h-full flex flex-col bg-ink text-paper font-body pb-24 md:pb-0"
+        style={{ overscrollBehaviorY: 'none' }}
+      >
         {children}
         <BottomNav />
       </body>
